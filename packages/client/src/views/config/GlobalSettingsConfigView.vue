@@ -1,84 +1,94 @@
 <template>
     <main class="container pt-2 d-flex flex-column gap-3">
-        <ConfigSettingConfig v-for="settingObj in globalSettings" :key="settingObj._id" :setting-id="settingObj._id"/>
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="New Setting Name" aria-label="New Setting Name" aria-describedby="button-add" v-model="newSettingName">
-            <button class="btn btn-primary" type="button" id="button-add" @click="createNewSetting"><i class="bi bi-plus"></i> Add</button>
+        <!-- <p v-for="setting in settingNames" :key="setting">{{ setting }}</p>
+        <ConfigSettingConfig v-for="settingObj in globalSettings" :key="settingObj._id" :name="settingObj._id"/> -->
+        <div class="card">
+            <div class="card-header">
+                Time Settings
+            </div>
+            <div class="card-body">
+
+                <ConfigSettingConfig :name="settings.warnTime.name" :setting-id="settings.warnTime.id" :display-name="settings.warnTime.displayName"/>
+                <ConfigSettingConfig :name="settings.kickTime.name" :setting-id="settings.kickTime.id" :display-name="settings.kickTime.displayName"/>
+            </div>
         </div>
     </main>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import ConfigSettingConfig from '../../components/config/GlobalSettingConfigCard.vue'
-import UseUpdateQuery from '../../useables/UseUpdateQuery'
 
 import {useToast} from 'vue-toast-notification'
 const toast = useToast()
 
-const globalSettingReq = useQuery(gql`
-query GlobalSetting($sort: SortFindManyGlobalSettingInput) {
-    globalSetting(sort: $sort) {
-        _id
-        name
-        value
+const settings = {
+    kickTime: {
+        name: 'kickTime',
+        id: ref(null),
+        displayName: 'Kick Time'
+    },
+    warnTime: {
+        name: 'warnTime',
+        id: ref(null),
+        displayName: 'Warn Time'
     }
-}`, {
-    sort: 'NAME_ASC'
-})
+}
 
-globalSettingReq.subscribeToMore(() => ({
-    document: gql`
-    subscription GlobalSettingCreate {
-        globalSettingCreate {
-            _id
-            name
-            value
-        }
-    }`,
-    updateQuery: UseUpdateQuery.standardCollectionCreateUpdateQuery('globalSetting', 'globalSettingCreate')
-}))
-
-globalSettingReq.subscribeToMore({
-    document: gql`
-    subscription GlobalSettingRemove {
-        globalSettingRemove {
-            _id
-        }
-    }`,
-    updateQuery: UseUpdateQuery.standardCollectionRemoveUpdateQuery('globalSetting', 'globalSettingRemove')
-})
-
-const globalSettings = computed(() => globalSettingReq.result.value?.globalSetting ?? [])
-
-const newSettingName = ref('')
-
-const { mutate: createGlobalSetting, onDone: onGlobalSettingsDone, onError: onGlobalSettingsError } = useMutation(gql`
-mutation GlobalSettingCreate($record: CreateOneGlobalSettingInput!) {
-    globalSettingCreate(record: $record) {
-        record {
-            _id
-            name
-            value
-        }
-    }
+const idLookupQuery = useQuery(gql`
+query GlobalSetting {
+  globalSetting {
+    _id
+    name
+  }
 }`)
 
-onGlobalSettingsDone(() => {
-    newSettingName.value = ''
+idLookupQuery.onResult((result) => {
+    if (result.data) {
+        Object.keys(settings).forEach((key) => {
+            let isFound = false
+            for(const gs of result.data.globalSetting) {
+                if (settings[key].name === gs.name) {
+                    settings[key].id.value = gs._id
+                    isFound = true
+                    break
+                }
+            }
+            if (!isFound) {
+                createGlobalSetting(settings[key].name)
+            }
+        })
+    }
 })
 
-onGlobalSettingsError((error) => {
-    toast.error('Error creating a new global setting')
+let { mutate: createGlobalSettingMutation, onDone: createGlobalSettingMutationDone, onError: createGlobalSettingMutationError } = useMutation(gql`
+    mutation GlobalSettingCreate($record: CreateOneGlobalSettingInput!) {
+        globalSettingCreate(record: $record) {
+            record {
+                name
+            }
+            recordId
+        }
+    }`)
+
+createGlobalSettingMutationDone(result => {
+    if (result.data) {
+        const  settingName = result.data.record.name
+        settings[settingName].id.value = result.data.recordId
+    }
+})
+
+createGlobalSettingMutationError((error) => {
+    toast.error('Error creating a new console')
     console.error(error)
 })
 
-function createNewSetting() {
-    createGlobalSetting({
+function createGlobalSetting(name) {
+    createGlobalSettingMutation({
         record: {
-            name: newSettingName.value
+            name
         }
     })
 }

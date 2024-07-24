@@ -22,7 +22,7 @@ export default function () {
         const settingObj = computed(() => req.result.value?.globalSettingOneLean ?? {})
 
         req.onResult(res => {
-            if (res.data.globalSettingOneLean) {
+            if (res.data && res.data.globalSettingOneLean) {
                 req.subscribeToMore({
                     document: gql`
                     subscription GlobalSettingUpdateById($recordId: MongoID!) {

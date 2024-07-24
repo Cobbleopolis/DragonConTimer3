@@ -1,35 +1,20 @@
 <template>
-    <div :class="'card border-' + borderVarient">
-        <div :class="'card-header text-bg-' + borderVarient">
-            <span>ID: {{  settingId }}</span>
-        </div>
-        <div class="card-body">
-            <form>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label :for="'settingName' + settingId" class="form-label">Setting Name</label>
-                        <input type="text" class="form-control" :id="'settingName' + settingId" v-model="settingName" :disabled="!isLoading()">
-                    </div>
-                    <div class="col-md-6">
-                        <label :for="'settingValue' + settingId" class="form-label">Setting Value</label>
-                        <input type="text" class="form-control" :id="'settingValue' + settingId" v-model="settingValue" :disabled="!isLoading()">
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="card-footer">
-            <div class="btn-toolbar" role="toolbar" aria-label="Operation buttons for this setting option">
-                <div class="btn-group me-2" role="group">
-                    <button class="btn btn-success" @click="saveClick"><i class="bi bi-save"></i> Save</button>
-                    <button class="btn btn-danger" @click="deleteClick"><i class="bi bi-trash"></i> Delete</button>
+    <form>
+        <div class="row mb-3">
+            <label :for="'settingValue' + props.settingId.value" class="col-form-label col-sm-2">{{displayName}}</label>
+            <div class="col-sm-10">
+                <div class="input-group">
+                    <input type="text" :class="'form-control border-' + borderVarient" :id="'settingValue' + props.settingId.value" v-model="settingValue" :disabled="settingId === null || !isLoading()">
+                    <button class="btn btn-info" type="button" v-popover title="ID" :data-bs-content="props.settingId"><i class="bi bi-info-circle"></i></button>
+                    <button class="btn btn-success" type="button" @click="saveClick()"><i class="bi bi-save"></i></button>
                 </div>
             </div>
         </div>
-    </div>
+    </form>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import UseUpdateQuery from '../../useables/UseUpdateQuery'
@@ -38,8 +23,12 @@ import {useToast} from 'vue-toast-notification'
 const toast = useToast()
 
 const props = defineProps({
-    settingId: String,
+    name: String,
+    settingId: Object,
+    displayName: String
 })
+
+const isQueryEnabled = ref(props.settingId.value !== null)
 
 const getGlobalSettingReq = useQuery(gql`
 query GlobalSettingById($id: MongoID!) {
@@ -48,62 +37,47 @@ query GlobalSettingById($id: MongoID!) {
     name
     value
   }
-}`, {
+}`,  {
     id: props.settingId
+}, {
+    enabled: isQueryEnabled
 })
 
 getGlobalSettingReq.onResult((result) => {
-    settingName.value = result.data.globalSettingById.name
-    settingValue.value = result.data.globalSettingById.value
+    if (result.data) {
+        // settingName.value = result.data.globalSettingById.name
+        settingValue.value = result.data.globalSettingById.value
+    }
 })
 
-getGlobalSettingReq.subscribeToMore({
-    document: gql`
-    subscription GlobalSettingUpdateById($recordId: MongoID!) {
-        globalSettingUpdateById(recordId: $recordId) {
-            _id
-            name
-            value
-        }
-    }`,
-    variables: {
-        recordId: props.settingId
-    },
-    updateQuery: UseUpdateQuery.standardUpdateUpdateQuery('globalSettingById', 'globalSettingUpdateById')
+getGlobalSettingReq.onError((error) => {
+    toast.error('Error saving the global setting')
+    console.error(error)
 })
 
-const globalSetting = computed(() => getGlobalSettingReq.result.value?.globalSettingById ?? {})
-
-const settingName = ref(globalSetting.value.name)
-const settingValue = ref(globalSetting.value.value)
+const settingValue = ref('')
 
 const borderVarient = ref('default')
 
-// const { result: subscriptionUpdateRes } = useSubscription(gql`
-// subscription GlobalSettingChangedById($recordId: MongoID!) {
-//   globalSettingChangedById(recordId: $recordId) {
-//     name
-//     value
-//   }
-// }`, {
-//     recordId: props.settingId
-// })
-
-// watch(
-//     subscriptionUpdateRes,
-//     data => {
-//         settingName.value = data.globalSettingChangedById.name
-//         settingValue.value = data.globalSettingChangedById.value
-//     },
-//     {
-//         lazy: true
-//     }
-// )
-
-// onMounted(() => {
-//     settingName.value = props.settingObj.name
-//     settingValue.value = props.settingObj.value
-// })
+watch(props.settingId, (newSettingId) => {
+    if (newSettingId) {
+        isQueryEnabled.value = true
+        getGlobalSettingReq.subscribeToMore({
+            document: gql`
+            subscription GlobalSettingUpdateById($recordId: MongoID!) {
+                globalSettingUpdateById(recordId: $recordId) {
+                    _id
+                    name
+                    value
+                }
+            }`,
+            variables: ref({
+                recordId: newSettingId
+            }),
+            updateQuery: UseUpdateQuery.standardUpdateUpdateQuery('globalSettingById', 'globalSettingUpdateById')
+        })
+    }
+})
 
 const { mutate: updateGlobalSetting, loading: updateLoading, onDone: onUpdateDone, onError: onUpdateError } = useMutation(gql`
 mutation GlobalSettingUpdateById($id: MongoID!, $record: UpdateByIdGlobalSettingInput!) {
@@ -120,43 +94,42 @@ onUpdateDone(() => {
 })
 
 onUpdateError((error) => {
-    toast.danger('Error saving the global setting')
+    toast.error('Error saving the global setting')
     console.error(error)
 })
 
-const { mutate: deleteGlobalSetting, loading: removeLoading, onError: onDeleteError } = useMutation(gql`
-mutation GlobalSettingRemoveById($id: MongoID!) {
-    globalSettingRemoveById(_id: $id) {
-        error {
-            message
-        }
-    }
-}`)
+// const { mutate: deleteGlobalSetting, loading: removeLoading, onError: onDeleteError } = useMutation(gql`
+// mutation GlobalSettingRemoveById($id: MongoID!) {
+//     globalSettingRemoveById(_id: $id) {
+//         error {
+//             message
+//         }
+//     }
+// }`)
 
-onDeleteError((error) => {
-    toast.danger('Error deleting the global setting')
-    console.error(error)
-})
+// onDeleteError((error) => {
+//     toast.danger('Error deleting the global setting')
+//     console.error(error)
+// })
 
 function isLoading() {
-    return updateLoading || removeLoading
+    return updateLoading
 }
 
 function saveClick() {
     updateGlobalSetting({
-        id: props.settingId,
+        id: props.settingId.value,
         record: {
-            name: settingName.value,
             value: settingValue.value
         }
     })
 }
 
-function deleteClick() {
-    deleteGlobalSetting({
-        id: props.settingId
-    })
-}
+// function deleteClick() {
+//     deleteGlobalSetting({
+//         id: props.settingId
+//     })
+// }
 
 function setBorderVarient(varient, timeout) {
     borderVarient.value = varient
