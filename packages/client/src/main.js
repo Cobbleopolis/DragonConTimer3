@@ -26,6 +26,7 @@ import './styles/main.sass'
 import * as bootstrap from 'bootstrap'
 
 import Themes from './services/ThemesService'
+import BootstrapDirectives from './directives/BootstrapDirectives'
 
 let baseUrl = window.location.host
 if (!baseUrl.endsWith('/')) {
@@ -126,6 +127,8 @@ const app = createApp({
 app.use(createPinia())
 app.use(router)
 app.use(ToastPlugin, toastOptions)
+app.directive('tooltip', BootstrapDirectives.tooltip)
+app.directive('popover', BootstrapDirectives.popover)
 
 app.config.globalProperties.$themes = new Themes()
 
