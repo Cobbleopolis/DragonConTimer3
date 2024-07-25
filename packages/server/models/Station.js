@@ -52,6 +52,7 @@ export default mongoose.model('Station', {
     orderPriority: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        index: true
     }
 })
