@@ -54,6 +54,7 @@ query Query {
         _id
         consoleOptions
         status
+        orderPriority
     }
 }`)
 
@@ -64,6 +65,7 @@ stationListReq.subscribeToMore({
             _id
             consoleOptions
             status
+            orderPriority
         }
     }`,
     updateQuery: UseUpdateQuery.standardCollectionCreateUpdateQuery('station', 'stationCreate')

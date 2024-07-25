@@ -83,7 +83,8 @@ function createNewConsole() {
         record: {
             name: newStationName.value,
             consoleOptions: [],
-            status: stationStates.DEFAULT
+            status: stationStates.DEFAULT,
+            orderPriority: 0
         }
     })
 }

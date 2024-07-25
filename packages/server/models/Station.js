@@ -48,5 +48,10 @@ export default mongoose.model('Station', {
     notes: {
         type: String,
         requied: false
+    },
+    orderPriority: {
+        type: Number,
+        required: true,
+        default: 0
     }
 })
