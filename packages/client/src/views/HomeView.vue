@@ -49,13 +49,16 @@ import stationStates from '../utils/stationStates'
 import UseUpdateQuery from '../useables/UseUpdateQuery'
 
 const stationListReq = useQuery(gql`
-query Query {
-    station {
+query Query($sort: SortFindManyStationInput) {
+    station(sort: $sort) {
         _id
         consoleOptions
         status
+        orderPriority
     }
-}`)
+}`, {
+    sort: 'ORDERPRIORITY_ASC'
+})
 
 stationListReq.subscribeToMore({
     document: gql`
@@ -64,6 +67,7 @@ stationListReq.subscribeToMore({
             _id
             consoleOptions
             status
+            orderPriority
         }
     }`,
     updateQuery: UseUpdateQuery.standardCollectionCreateUpdateQuery('station', 'stationCreate')
