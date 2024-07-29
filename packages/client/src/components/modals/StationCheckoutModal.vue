@@ -79,7 +79,7 @@
                             <div class="mb-3">
                                 <label id="checkoutNotesLabel" class="form-label" for="checkoutNotesInput">Checkout Notes</label>
                                 <textarea rows="1" class="form-control" id="checkoutNotesInput" name="checkoutNotes" aria-describedby="stationNotesHelp" placeholder="Lorem ipsum..." v-model="formCurrentCheckoutNotes"></textarea>
-                                <div id="stationNotesHelp" class="form-text">Some notes we need to know about this checkout. It will be wiped when the station is checked back in.</div>
+                                <div id="checkoutNotesHelp" class="form-text">Some notes we need to know about this checkout. It will be wiped when the station is checked back in.</div>
                             </div>
                         </fieldset>
                     </form>
