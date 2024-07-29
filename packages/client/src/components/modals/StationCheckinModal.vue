@@ -109,7 +109,8 @@ function checkinStation() {
             currentExtras: [],
             currentGame: '',
             checkoutTime: null,
-            status: stationStates.DEFAULT
+            status: stationStates.DEFAULT,
+            checkoutNotes: ''
         }
     })
 }

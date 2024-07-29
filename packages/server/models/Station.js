@@ -49,6 +49,10 @@ export default mongoose.model('Station', {
         type: String,
         requied: false
     },
+    checkoutNotes: {
+        type: String,
+        required: false
+    },
     orderPriority: {
         type: Number,
         required: true,
