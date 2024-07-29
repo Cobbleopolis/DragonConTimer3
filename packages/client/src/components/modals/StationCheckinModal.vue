@@ -7,10 +7,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div v-if="currentConsole && currentConsole.checkinWarning" class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> {{ currentConsole.checkinWarning }}
+                    </div>
                     <h5>Items to return:</h5>
                     <dl class="row">
                         <dt class="col-sm-3" v-if="shouldDisplayName">Name</dt>
-                        <dt class="col-sm-9" v-if="shouldDisplayName">{{ station.playerName }}</dt>
+                        <dd class="col-sm-9" v-if="shouldDisplayName">{{ station.playerName }}</dd>
 
                         <dt class="col-sm-3" v-if="shouldDisplayGame">Game</dt>
                         <dd class="col-sm-9" v-if="shouldDisplayGame">{{ station.currentGame }}</dd>

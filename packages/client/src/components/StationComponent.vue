@@ -115,6 +115,7 @@ query ConsoleByIds($ids: [MongoID!]!, $sort: SortFindByIdsConsoleInput) {
     consoleByIds(_ids: $ids, sort: $sort) {
         _id
         checkoutWarning
+        checkinWarning
         games {
             count
             name
@@ -205,6 +206,7 @@ consoleReq.subscribeToMore(() => ({
         consoleUpdateByIds(recordIds: $recordIds) {
             _id
             checkoutWarning
+            checkinWarning
             games {
                 count
                 name
