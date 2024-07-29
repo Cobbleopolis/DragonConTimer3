@@ -41,5 +41,9 @@ export default mongoose.model('Console', {
     checkoutWarning: {
         type: String,
         required: false
+    },
+    checkinWarning: {
+        type: String,
+        required: false
     }
 })
