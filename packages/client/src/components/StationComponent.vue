@@ -41,8 +41,9 @@
                 </div>
             </form>
         </div>
-        <ul class="list-group list-group-flush" v-if="station.notes">
-            <li class="list-group-item text-primary-emphasis bg-primary-subtle">Notes: {{ station.notes }}</li>
+        <ul class="list-group list-group-flush" v-if="station.notes || station.checkoutNotes">
+            <li class="list-group-item text-primary-emphasis bg-primary-subtle" v-if="station.notes"><i class="bi bi-info-circle"></i> Notes: {{ station.notes }}</li>
+            <li class="list-group-item text-primary-emphasis bg-primary-subtle" v-if="station.checkoutNotes"><i class="bi bi-info-circle"></i> Checkout Notes: {{ station.checkoutNotes }}</li>
         </ul>
         <div class="card-footer text-body-secondary">
             <div class="btn-toolbar d-flex flex-wrap gap-2" role="toolbar" aria-label="Toolbar with button groups">
@@ -103,6 +104,7 @@ query StationById($stationId: MongoID!) {
         }
         name
         notes
+        checkoutNotes
         playerName
         status
     }
@@ -190,6 +192,7 @@ stationReq.subscribeToMore(() => ({
             currentGame
             name
             notes
+            checkoutNotes
             playerName
             status
         }
