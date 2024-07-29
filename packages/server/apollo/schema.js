@@ -5,13 +5,15 @@ import { composeMongoose } from 'graphql-compose-mongoose'
 import ConsoleModel from '../models/Console.js'
 import StationModel  from '../models/Station.js'
 import GlobalSettingModel from '../models/GlobalSetting.js'
+import WaitlistEntry from '../models/WaitlistEntry.js'
 
 const composeOptions = {}
 
 const models = {
     console: ConsoleModel,
     station: StationModel,
-    globalSetting: GlobalSettingModel
+    globalSetting: GlobalSettingModel,
+    waitlistEntry: WaitlistEntry
 }
 
 let TypeComposers = {}
