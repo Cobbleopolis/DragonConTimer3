@@ -16,6 +16,7 @@ const app = express()
 
 app.use('/', express.static(path.join(__dirname, 'public')))
 app.use('/availability', express.static(path.join(__dirname, 'public')))
+app.use('/waitlist', express.static(path.join(__dirname, 'public')))
 app.use('/config/globalSettings', express.static(path.join(__dirname, 'public')))
 app.use('/config/consoles', express.static(path.join(__dirname, 'public')))
 app.use('/config/stations', express.static(path.join(__dirname, 'public')))
