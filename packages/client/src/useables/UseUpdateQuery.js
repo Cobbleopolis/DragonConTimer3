@@ -1,12 +1,15 @@
-function standardCollectionCreateUpdateQuery(queryName, subscriptionName) {
+function standardCollectionCreateUpdateQuery(queryName, subscriptionName, sortCallback) {
     return (previousResult, { subscriptionData }) => {
         const tmp = structuredClone(previousResult)
         tmp[queryName] = [...tmp[queryName], subscriptionData.data[subscriptionName]]
+        if (sortCallback) {
+            tmp[queryName].sort(sortCallback)
+        }
         return tmp
     }
 }
 
-function standardCollectionUpdateUpdateQuery(queryName, subscriptionName) {
+function standardCollectionUpdateUpdateQuery(queryName, subscriptionName, sortCallback) {
     return (previousResult, { subscriptionData }) => {
         const tmp = structuredClone(previousResult)
         for (let i in tmp.station) {
@@ -15,11 +18,14 @@ function standardCollectionUpdateUpdateQuery(queryName, subscriptionName) {
                 break
             }
         }
+        if (sortCallback) {
+            tmp[queryName].sort(sortCallback)
+        }
         return tmp
     }
 }
 
-function standardCollectionRemoveUpdateQuery(queryName, subscriptionName) {
+function standardCollectionRemoveUpdateQuery(queryName, subscriptionName, sortCallback) {
     return (previousResult, { subscriptionData }) => {
     //     if (subscriptionData.data[subscriptionName]) {
     //         const tmp = structuredClone(previousResult)
@@ -37,15 +43,21 @@ function standardCollectionRemoveUpdateQuery(queryName, subscriptionName) {
     //     }
         const tmp = structuredClone(previousResult)
         tmp[queryName] = tmp[queryName].filter(obj => obj._id !== subscriptionData.data[subscriptionName]._id)
+        if (sortCallback) {
+            tmp[queryName].sort(sortCallback)
+        }
         return tmp
     }
 }
 
-function standardUpdateUpdateQuery(queryName, subscriptionName) {
+function standardUpdateUpdateQuery(queryName, subscriptionName, sortCallback) {
     return (previousResult, { subscriptionData }) => {
         const tmp = structuredClone(previousResult)
         for (const key in subscriptionData.data[subscriptionName]) {
             tmp[queryName][key] = subscriptionData.data[subscriptionName][key]
+        }
+        if (sortCallback) {
+            tmp[queryName].sort(sortCallback)
         }
         return tmp
     }

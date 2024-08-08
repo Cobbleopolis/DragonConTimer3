@@ -7,7 +7,8 @@ export default mongoose.model('WaitlistEntry', {
     },
     waitingTimestamp: {
         type: Date,
-        required: true
+        required: true,
+        index: true
     },
     waitingConsole: {
         type: [mongoose.Types.ObjectId],
