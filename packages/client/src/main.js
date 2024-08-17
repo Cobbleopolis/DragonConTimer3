@@ -73,6 +73,9 @@ const cache = new InMemoryCache({
                 globalSetting: {
                     merge: false
                 },
+                waitlistEntry: {
+                    merge: false
+                }
                 // station: {
                 //     merge(existing, incoming) {
                 //         return incoming
@@ -103,6 +106,16 @@ const cache = new InMemoryCache({
         Station: {
             fields: {
                 currentExtras: {
+                    merge: false
+                }
+            }
+        },
+        WaitlistEntry: {
+            fields: {
+                waitingConsole: {
+                    merge: false
+                },
+                waitingGame: {
                     merge: false
                 }
             }
