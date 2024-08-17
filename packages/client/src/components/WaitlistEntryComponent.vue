@@ -25,9 +25,10 @@
         <div class="card-footer">
             <div class="btn-toolbar d-flex flex-wrap gap-2" role="toolbar" aria-label="Toolbar with button groups">
                 <button class="btn btn-danger" @click="deleteEntry()"><i class="bi bi-trash"></i> Delete</button>
-                <button class="btn btn-info"><i class="bi bi-pencil"></i> Set Fields</button>
+                <button class="btn btn-info" @click="showEditModal()"><i class="bi bi-pencil"></i> Set Fields</button>
             </div>
         </div>
+        <WaitlistEntryFieldModal :waitlist-entry="waitlistEntry" :console-options="consoleList" ref="waitlistEntryFieldModal"/>
     </div>
 </template>
 
@@ -37,6 +38,10 @@ import { useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import moment from 'moment'
 import timeUtils from '../utils/timeUtils'
+import WaitlistEntryFieldModal from './modals/WaitlistEntryFieldModal.vue'
+
+import {useToast} from 'vue-toast-notification'
+const toast = useToast()
 
 const props = defineProps({
     waitlistEntry: Object,
@@ -49,16 +54,33 @@ const displayGame = computed(() => props.waitlistEntry.waitingGame.length > 0)
 
 const waitingConsoleNames = computed(() => props.waitlistEntry.waitingConsole.map(x => props.consoleList.find(c => c._id == x).name))
 
-const { mutate: deleteQuery } = useMutation(gql`
+const waitlistEntryFieldModal = ref(null)
+
+const { mutate: deleteQuery, onDone: onDeleteDone, onError: onDeleteError } = useMutation(gql`
 mutation WaitlistEntryRemoveById($id: MongoID!) {
   waitlistEntryRemoveById(_id: $id) {
     recordId
   }
 }`)
 
+onDeleteDone(() => {
+    toast.success('Entry deleted from waitlist!')
+})
+
+onDeleteError((error) => {
+    toast.error('Error occured while attempting to delete entry from the waitlist!')
+    console.error(error)
+})
+
 function deleteEntry() {
     deleteQuery({
         id: props.waitlistEntry._id
+    })
+}
+
+function showEditModal() {
+    waitlistEntryFieldModal.value.show({
+        popFields: true
     })
 }
 
