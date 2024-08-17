@@ -32,6 +32,25 @@
                                 <div :id="'waitingGameInputHelp' + waitlistEntry._id" class="form-text">The game(s) that the person wants to wait for</div>
                             </div>
                         </fieldset>
+                        <fieldset class="mb-3">
+                            <legend>Checkout Time</legend>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="updateTimeInput" v-model="updateTime">
+                                <label class="form-check-label" id="updateTimeLabel" for="updateTimeInput">Update Checkout Time</label>
+                            </div>
+                            <div v-if="updateTime">
+                                <div class="input-group">
+                                    <div class="input-group-text">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="" id="useCustomTimeInput" v-model="useCustomTime">
+                                            <label class="form-check-label" id="useCustomTimeLabel" for="useCustomTimeInput">Custom Time</label> 
+                                        </div>   
+                                    </div>
+                                    <input type="datetime-local" class="form-control" aria-label="Custom Time" :disabled="!useCustomTime" v-model="customTime">
+                                    <button class="btn btn-outline-secondary" type="button" id="customTimeNowButton" @click="setCustomTime(moment())" :disabled="!useCustomTime">Now</button>
+                                </div>
+                            </div>
+                        </fieldset>
                         <fieldset>
                             <div class="mb-3">
                                 <label :id="'notesLabel' + waitlistEntry._id" class="form-label" :for="'notesInput' + waitlistEntry._id">Notes</label>
@@ -72,6 +91,11 @@ const formPlayerName = ref('')
 const formWaitingConsoles = ref([])
 const formWaitingGames = ref([])
 const gameToAdd = ref('')
+
+const updateTime = ref(false)
+const useCustomTime = ref(false)
+const customTime = ref('')
+
 const formNotes = ref('')
 
 let modalRoot = ref(null)
@@ -90,6 +114,8 @@ function _show(options) {
         populateFields()
     }
     gameToAdd.value = ''
+    updateTime.value = options.defaultTimeUpdateState ?? false
+    useCustomTime.value = options.defaultUpdateCustomTimeState ?? false
     modalObj.show()
 }
 
@@ -109,6 +135,7 @@ function populateFields() {
         formPlayerName.value = props.waitlistEntry.playerName
         formWaitingConsoles.value = props.waitlistEntry.waitingConsole ?? []
         formWaitingGames.value = props.waitlistEntry.waitingGame ?? []
+        setCustomTime(moment(props.station?.checkoutTime) ?? moment())
         formNotes.value = props.waitlistEntry.notes
     }
 }
@@ -124,7 +151,9 @@ function removeFromGameList(index) {
     formWaitingGames.value = formWaitingGames.value.filter((_, i) => index !== i)
 }
 
-
+function setCustomTime(momentObj) {
+    customTime.value = momentObj.local().format('YYYY-MM-DD HH:mm:ss')
+}
 
 
 const { mutate: updateStation, onDone: onUpdateDone, onError: onUpdateError } = useMutation(gql`
@@ -174,6 +203,13 @@ function upsertEntry() {
         waitingConsole: formWaitingConsoles.value,
         waitingGame: formWaitingGames.value,
         notes: formNotes.value
+    }
+    if (updateTime.value) {
+        if (useCustomTime.value) {
+            record['waitingTimestamp'] = customTime.value
+        } else {
+            record['waitingTimestamp'] = moment()
+        }
     }
     if (props.waitlistEntry) {
         updateStation({
