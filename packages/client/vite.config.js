@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
-const __dirname = import.meta.dirname;
+const __dirname = import.meta.dirname
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
