@@ -10,6 +10,8 @@
 
                 <ConfigSettingConfig :name="settings.warnTime.name" :setting-id="settings.warnTime.id" :display-name="settings.warnTime.displayName"/>
                 <ConfigSettingConfig :name="settings.kickTime.name" :setting-id="settings.kickTime.id" :display-name="settings.kickTime.displayName"/>
+                <ConfigSettingConfig :name="settings.warnWaitlistTime.name" :setting-id="settings.warnWaitlistTime.id" :display-name="settings.warnWaitlistTime.displayName"/>
+                <ConfigSettingConfig :name="settings.dangerWaitlistTime.name" :setting-id="settings.dangerWaitlistTime.id" :display-name="settings.dangerWaitlistTime.displayName"/>
             </div>
         </div>
     </main>
@@ -34,6 +36,16 @@ const settings = {
         name: 'warnTime',
         id: ref(null),
         displayName: 'Warn Time'
+    },
+    warnWaitlistTime: {
+        name: 'warnWaitlistTime',
+        id: ref(null),
+        displayName: 'Warn Waitlist Time'
+    },
+    dangerWaitlistTime: {
+        name: 'dangerWaitlistTime',
+        id: ref(null),
+        displayName: 'Danger Waitlist Time'
     }
 }
 
@@ -75,7 +87,7 @@ let { mutate: createGlobalSettingMutation, onDone: createGlobalSettingMutationDo
 
 createGlobalSettingMutationDone(result => {
     if (result.data) {
-        const  settingName = result.data.record.name
+        const settingName = result.data.record.name
         settings[settingName].id.value = result.data.recordId
     }
 })

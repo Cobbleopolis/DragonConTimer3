@@ -1,6 +1,6 @@
 <template>
-    <div class="card mb-2">
-        <div class="card-header">
+    <div :class="'card mb-2 border-' + borderVarient">
+        <div :class="'card-header text-bg-' + borderVarient">
             <b>{{ waitlistEntry.playerName }}</b>
         </div>
         <div class="card-body">
@@ -39,6 +39,8 @@ import gql from 'graphql-tag'
 import moment from 'moment'
 import timeUtils from '../utils/timeUtils'
 import WaitlistEntryFieldModal from './modals/WaitlistEntryFieldModal.vue'
+
+import UseGlobalSettings from '../useables/UseGlobalSettings'
 
 import {useToast} from 'vue-toast-notification'
 const toast = useToast()
@@ -87,7 +89,7 @@ function showEditModal() {
 
 function updateTick() {
     getFormattedTimeFromNow()
-    // updateBorderVarient()
+    updateBorderVarient()
 }
 
 const timeSinceTimestamp = ref('')
@@ -96,9 +98,29 @@ function getFormattedTimeFromNow() {
     timeSinceTimestamp.value = timeUtils.formatDurationFormat(moment.duration(moment().diff(moment(props.waitlistEntry.waitingTimestamp))))
 }
 
+const { getSetting } = UseGlobalSettings()
+const warnWaitlistTime = getSetting('warnWaitlistTime')
+const dangerWaitlistTime = getSetting('dangerWaitlistTime')
+const borderVarient = ref('default')
+
+function updateBorderVarient() {
+    if (props.waitlistEntry && warnWaitlistTime.value && dangerWaitlistTime.value) {
+        const duration = moment.duration(moment().diff(moment(props.waitlistEntry.waitingTimestamp))).asMilliseconds()
+        const warnWaitlistMillis = moment.duration(warnWaitlistTime.value.value).asMilliseconds()
+        const dangerWaitlistMills = moment.duration(dangerWaitlistTime.value.value).asMilliseconds()
+        if (dangerWaitlistTime && duration >= dangerWaitlistMills) {
+            borderVarient.value = 'danger'
+        } else if (warnWaitlistTime && duration >= warnWaitlistMillis) {
+            borderVarient.value = 'warning'
+        } else {
+            borderVarient.value = 'default'
+        }
+    }
+}
+
 onMounted(() => {
-    updateTick()
-    setInterval(updateTick, 1000)  
+    getFormattedTimeFromNow()
+    setInterval(updateTick, 1000)
 })
 
 onUnmounted(() => {
