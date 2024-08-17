@@ -18,6 +18,11 @@ const router = createRouter({
             component: () => import('../views/Availability.vue'),
         },
         {
+            path: '/waitlist',
+            name: 'waitlist',
+            component: () => import('../views/WaitlistView.vue')
+        },
+        {
             path: '/config/globalSettings',
             name: 'Config: Global Settings',
             component: () => import('../views/config/GlobalSettingsConfigView.vue')
