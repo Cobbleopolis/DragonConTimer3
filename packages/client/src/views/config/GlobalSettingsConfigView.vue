@@ -4,14 +4,21 @@
         <ConfigSettingConfig v-for="settingObj in globalSettings" :key="settingObj._id" :name="settingObj._id"/> -->
         <div class="card">
             <div class="card-header">
+                General Settings
+            </div>
+            <div class="card-body">
+                <ConfigSettingConfig :name="settings.appName.name" :setting-obj="settings.appName.settingObj" :display-name="settings.appName.displayName"/>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
                 Time Settings
             </div>
             <div class="card-body">
-
-                <ConfigSettingConfig :name="settings.warnTime.name" :setting-id="settings.warnTime.id" :display-name="settings.warnTime.displayName"/>
-                <ConfigSettingConfig :name="settings.kickTime.name" :setting-id="settings.kickTime.id" :display-name="settings.kickTime.displayName"/>
-                <ConfigSettingConfig :name="settings.warnWaitlistTime.name" :setting-id="settings.warnWaitlistTime.id" :display-name="settings.warnWaitlistTime.displayName"/>
-                <ConfigSettingConfig :name="settings.dangerWaitlistTime.name" :setting-id="settings.dangerWaitlistTime.id" :display-name="settings.dangerWaitlistTime.displayName"/>
+                <ConfigSettingConfig :name="settings.warnTime.name" :setting-obj="settings.warnTime.settingObj" :display-name="settings.warnTime.displayName"/>
+                <ConfigSettingConfig :name="settings.kickTime.name" :setting-obj="settings.kickTime.settingObj" :display-name="settings.kickTime.displayName"/>
+                <ConfigSettingConfig :name="settings.warnWaitlistTime.name" :setting-obj="settings.warnWaitlistTime.settingObj" :display-name="settings.warnWaitlistTime.displayName"/>
+                <ConfigSettingConfig :name="settings.dangerWaitlistTime.name" :setting-obj="settings.dangerWaitlistTime.settingObj" :display-name="settings.dangerWaitlistTime.displayName"/>
             </div>
         </div>
     </main>
@@ -24,46 +31,53 @@ import gql from 'graphql-tag'
 import ConfigSettingConfig from '../../components/config/GlobalSettingConfigCard.vue'
 
 import {useToast} from 'vue-toast-notification'
+import UseUpdateQuery from '../../useables/UseUpdateQuery'
 const toast = useToast()
 
 const settings = {
+    appName: {
+        name: 'appName',
+        settingObj: ref(null),
+        displayName: 'App Name'
+    },
     kickTime: {
         name: 'kickTime',
-        id: ref(null),
+        settingObj: ref(null),
         displayName: 'Kick Time'
     },
     warnTime: {
         name: 'warnTime',
-        id: ref(null),
+        settingObj: ref(null),
         displayName: 'Warn Time'
     },
     warnWaitlistTime: {
         name: 'warnWaitlistTime',
-        id: ref(null),
+        settingObj: ref(null),
         displayName: 'Warn Waitlist Time'
     },
     dangerWaitlistTime: {
         name: 'dangerWaitlistTime',
-        id: ref(null),
+        settingObj: ref(null),
         displayName: 'Danger Waitlist Time'
     }
 }
 
-const idLookupQuery = useQuery(gql`
+const allGlobalSettingLookup = useQuery(gql`
 query GlobalSetting {
   globalSetting {
     _id
     name
+    value
   }
 }`)
 
-idLookupQuery.onResult((result) => {
+allGlobalSettingLookup.onResult((result) => {
     if (result.data) {
         Object.keys(settings).forEach((key) => {
             let isFound = false
             for(const gs of result.data.globalSetting) {
                 if (settings[key].name === gs.name) {
-                    settings[key].id.value = gs._id
+                    settings[key].settingObj.value = gs
                     isFound = true
                     break
                 }
@@ -75,20 +89,33 @@ idLookupQuery.onResult((result) => {
     }
 })
 
-let { mutate: createGlobalSettingMutation, onDone: createGlobalSettingMutationDone, onError: createGlobalSettingMutationError } = useMutation(gql`
+allGlobalSettingLookup.subscribeToMore({
+    document: gql`
+    subscription GlobalSettingUpdate {
+        globalSettingUpdate {
+            _id
+            name
+            value
+        }
+    }`,
+    updateQuery: UseUpdateQuery.standardCollectionUpdateUpdateQuery('globalSetting', 'globalSettingUpdate')
+})
+
+const { mutate: createGlobalSettingMutation, onDone: createGlobalSettingMutationDone, onError: createGlobalSettingMutationError } = useMutation(gql`
     mutation GlobalSettingCreate($record: CreateOneGlobalSettingInput!) {
         globalSettingCreate(record: $record) {
             record {
+                _id
                 name
+                value
             }
-            recordId
         }
     }`)
 
 createGlobalSettingMutationDone(result => {
     if (result.data) {
-        const settingName = result.data.record.name
-        settings[settingName].id.value = result.data.recordId
+        const settingName = result.data.globalSettingCreate.record.name
+        settings[settingName].settingObj.value = result.data.globalSettingCreate.record
     }
 })
 
