@@ -123,6 +123,8 @@ function isVisible() {
 function _show(options) {
     if (options.popFields) {
         populateFields()
+    } else {
+        clearFields()
     }
     gameToAdd.value = ''
     updateTime.value = options.defaultTimeUpdateState ?? false
@@ -150,6 +152,14 @@ function populateFields() {
         setCustomTime(moment(props.station?.checkoutTime) ?? moment())
         formNotes.value = props.waitlistEntry.notes
     }
+}
+
+function clearFields() {
+    formPlayerName.value = ''
+    formWaitingConsoles.value = []
+    formWaitingGames.value = []
+    setCustomTime(moment())
+    formNotes.value = ''
 }
 
 
