@@ -3,7 +3,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Waitlest Entry Temp Title</h5>
+                    <h5 class="modal-title">{{ title }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -28,8 +28,11 @@
                                 <div v-if="formWaitingGames.length > 0" class="mb-2 d-flex gap-2">
                                     <button v-for="(game, i) in formWaitingGames" :key="game" type="button" class="btn btn-outline badge rounded-pill text-bg-secondary" @click="removeFromGameList(i)">{{ game }} <i class="bi bi-x-circle-fill"></i></button>
                                 </div>
-                                <input class="form-control" type="text" :id="'waitingGameInput' + waitlistEntry._id" v-model="gameToAdd" @keyup.enter="addGameToFormValue" />
+                                <input class="form-control" type="text" :id="'waitingGameInput' + waitlistEntry._id" v-model="gameToAdd" @keyup.enter="addGameToFormValue" :list="'waitingGameOptions' + waitlistEntry._id" />
                                 <div :id="'waitingGameInputHelp' + waitlistEntry._id" class="form-text">The game(s) that the person wants to wait for</div>
+                                <datalist :id="'waitingGameOptions' + waitlistEntry._id">
+                                    <option v-for="game in gameOptions" :key="game">{{ game }}</option>
+                                </datalist>
                             </div>
                         </fieldset>
                         <fieldset class="mb-3">
@@ -73,7 +76,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useMutation, useQueryLoading } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import * as bootstrap from 'bootstrap'
@@ -101,6 +104,14 @@ const formNotes = ref('')
 let modalRoot = ref(null)
 let modalObj = null
 
+const title = ref('')
+
+const gameOptions = computed(() => {
+    return props.consoleOptions
+        .filter(x => formWaitingConsoles.value.includes(x._id))
+        .flatMap(x => x.games.map(y => y.name))
+})
+
 onMounted(() => {
     modalObj = new bootstrap.Modal(modalRoot.value)
 })
@@ -116,6 +127,7 @@ function _show(options) {
     gameToAdd.value = ''
     updateTime.value = options.defaultTimeUpdateState ?? false
     useCustomTime.value = options.defaultUpdateCustomTimeState ?? false
+    title.value = options.title ?? 'New Waitlist Entry'
     modalObj.show()
 }
 
@@ -211,7 +223,7 @@ function upsertEntry() {
             record['waitingTimestamp'] = moment()
         }
     }
-    if (props.waitlistEntry) {
+    if (props.waitlistEntry && props.waitlistEntry._id) {
         updateStation({
             id: props.waitlistEntry._id,
             record

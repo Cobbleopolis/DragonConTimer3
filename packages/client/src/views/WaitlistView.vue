@@ -1,7 +1,12 @@
 <template>
     <div class="container pt-2">
+        <div class="d-flex justify-content-between mb-2">
+            <h4 class="mb-0">Waitlist Count: {{ waitlistEntries.length }}</h4>
+            <button type="button" class="btn btn-primary" @click="showCreateMenu()"><i class="bi bi-plus"></i> Add</button>
+        </div>
         <template v-if="!isLoading">
             <WaitlistEntryComponent v-for="entry in waitlistEntries" :key="entry._id" :waitlistEntry="entry" :consoleList="consoles" />
+            <WaitlistEntryFieldModal :waitlistEntry="{ _id:'' }" :consoleOptions="consoles" ref="createModal"/>
         </template>
         <template v-else>
             <div class="d-flex justify-content-center">
@@ -15,9 +20,12 @@
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import LoadingAnimation from '../components/LoadingAnimation.vue'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import UseUpdateQuery from '../useables/UseUpdateQuery'
 import WaitlistEntryComponent from '../components/WaitlistEntryComponent.vue'
+import WaitlistEntryFieldModal from '../components/modals/WaitlistEntryFieldModal.vue'
+
+const createModal = ref(null)
 
 const isLoading = useQueryLoading()
 
@@ -92,6 +100,9 @@ query Console {
   console {
     _id
     name
+    games {
+      name
+    }
   }
 }`)
 
@@ -101,6 +112,9 @@ consoleReq.subscribeToMore({
         consoleUpdate {
             _id
             name
+            games {
+                name
+            }
         }
     }`,
     updateQuery: UseUpdateQuery.standardCollectionUpdateUpdateQuery('console', 'consoleUpdate')
@@ -112,6 +126,9 @@ consoleReq.subscribeToMore({
         consoleCreate {
             _id
             name
+            games {
+                name
+            }
         }
     }`,
     updateQuery: UseUpdateQuery.standardCollectionCreateUpdateQuery('console', 'consoleCreate')
@@ -123,6 +140,9 @@ consoleReq.subscribeToMore({
         consoleRemove {
             _id
             name
+            games {
+                name
+            }
         }
     }`,
     updateQuery: UseUpdateQuery.standardCollectionRemoveUpdateQuery('console', 'consoleRemove')
@@ -130,5 +150,13 @@ consoleReq.subscribeToMore({
 
 const consoles = computed(() => consoleReq.result.value?.console ?? [])
 
+function showCreateMenu() {
+    if(createModal.value) {
+        createModal.value.show({
+            popFields: false,
+            defaultTimeUpdateState: true
+        })
+    }
+}
 
 </script>

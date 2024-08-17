@@ -80,7 +80,8 @@ function deleteEntry() {
 
 function showEditModal() {
     waitlistEntryFieldModal.value.show({
-        popFields: true
+        popFields: true,
+        title: 'Update Waitlist Entry'
     })
 }
 
