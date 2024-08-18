@@ -1,11 +1,13 @@
 import { withFilter } from 'graphql-subscriptions'
 import { schemaComposer } from 'graphql-compose'
 import { composeMongoose } from 'graphql-compose-mongoose'
+import mongoose from 'mongoose'
 
 import ConsoleModel from '../models/Console.js'
 import StationModel  from '../models/Station.js'
 import GlobalSettingModel from '../models/GlobalSetting.js'
 import WaitlistEntry from '../models/WaitlistEntry.js'
+import TelemetryEntry from '../models/TelemetryEntry.js'
 
 const composeOptions = {}
 
@@ -13,7 +15,8 @@ const models = {
     console: ConsoleModel,
     station: StationModel,
     globalSetting: GlobalSettingModel,
-    waitlistEntry: WaitlistEntry
+    waitlistEntry: WaitlistEntry,
+    telemetryEntry: TelemetryEntry
 }
 
 let TypeComposers = {}
@@ -72,7 +75,20 @@ export default function(pubsub) {
 
                 // extend resolve params with hook
                 const mutationOperation = prefix + determineMutationOperation(k)
-                rp.beforeRecordMutate = async function (doc) {
+                rp.beforeRecordMutate = async function (doc, resolverParams) {
+                    try {
+                        if (mutationOperation.indexOf('telemetry') === -1) { //Don't want to generate telemetry for the telemetry itself
+                            const telEntry = new TelemetryEntry({
+                                timestamp: new Date(),
+                                eventType: mutationOperation,
+                                oldState: JSON.parse(JSON.stringify(doc)), //gross but it stops the doc record from updating before the save goes through
+                                mutationArgs: resolverParams.args
+                            })
+                            telEntry.save()
+                        }
+                    } catch (e) {
+                        console.error(e)
+                    }
                     pubsub.publish(mutationOperation, { [mutationOperation]: doc })
                     return doc
                 }
