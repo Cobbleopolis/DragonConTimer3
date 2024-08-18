@@ -19,6 +19,8 @@ const models = {
     telemetryEntry: TelemetryEntry
 }
 
+const GENERATE_TELEMETRY = (process.env.GENERATE_TELEMETRY ?? "false") === "true"
+
 let TypeComposers = {}
 
 for(const [key, value] of Object.entries(models)) {
@@ -77,7 +79,7 @@ export default function(pubsub) {
                 const mutationOperation = prefix + determineMutationOperation(k)
                 rp.beforeRecordMutate = async function (doc, resolverParams) {
                     try {
-                        if (mutationOperation.indexOf('telemetry') === -1) { //Don't want to generate telemetry for the telemetry itself
+                        if (GENERATE_TELEMETRY && mutationOperation.indexOf('telemetry') === -1) { //Don't want to generate telemetry for the telemetry itself
                             const telEntry = new TelemetryEntry({
                                 timestamp: new Date(),
                                 eventType: mutationOperation,
