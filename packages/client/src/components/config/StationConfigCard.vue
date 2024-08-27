@@ -16,6 +16,10 @@
                         <label class="form-check-label" :for="stationId + 'consoleOption' + console._id">{{ console.name }}</label>
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label :for="'orderPriority' + station._id" class="form-label">Order Priority</label>
+                    <input type="number" class="form-control" :id="'orderPriority' + station._id" v-model="formOrderPriority">
+                </div>
             </div>
             <div class="card-footer">
                 <div class="btn-toolbar" role="toolbar" aria-label="Operation buttons for this console">
@@ -59,6 +63,7 @@ query StationById($id: MongoID!) {
         _id
         consoleOptions
         name
+        orderPriority
     }
 }`, {
     id: props.stationId
@@ -71,6 +76,7 @@ stationReq.subscribeToMore({
             _id
             consoleOptions
             name
+            orderPriority
         }
     }`, 
     variables: {
@@ -80,8 +86,11 @@ stationReq.subscribeToMore({
 })
 
 stationReq.onResult((result) => {
-    formName.value = result.data.stationById.name
-    formConsoleOptions.value = result.data.stationById.consoleOptions
+    if (result.data) {
+        formName.value = result.data.stationById.name
+        formConsoleOptions.value = result.data.stationById.consoleOptions
+        formOrderPriority.value = result.data.stationById.orderPriority
+    }
 })
 
 const station = computed(() => stationReq.result.value?.stationById ?? {})
@@ -131,6 +140,7 @@ const consoles = computed(() => consoleReq.result.value?.console ?? {})
 
 const formName = ref(station.value.name)
 const formConsoleOptions = ref(station.value.consoleOptions)
+const formOrderPriority = ref(station.value.orderPriority)
 
 const { mutate: updateStation, onDone: onUpdateDone, onError: onUpdateError } = useMutation(gql`
 mutation Mutation($id: MongoID!, $record: UpdateByIdStationInput!) {
@@ -170,7 +180,8 @@ function saveClick() {
         id: props.stationId,
         record: {
             name: formName.value,
-            consoleOptions: formConsoleOptions.value
+            consoleOptions: formConsoleOptions.value,
+            orderPriority: formOrderPriority.value
         }
     })
 }

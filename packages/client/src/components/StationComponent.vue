@@ -41,15 +41,16 @@
                 </div>
             </form>
         </div>
-        <ul class="list-group list-group-flush" v-if="station.notes">
-            <li class="list-group-item text-primary-emphasis bg-primary-subtle">Notes: {{ station.notes }}</li>
+        <ul class="list-group list-group-flush" v-if="station.notes || station.checkoutNotes">
+            <li class="list-group-item text-primary-emphasis bg-primary-subtle" v-if="station.notes"><i class="bi bi-info-circle"></i> Notes: {{ station.notes }}</li>
+            <li class="list-group-item text-primary-emphasis bg-primary-subtle" v-if="station.checkoutNotes"><i class="bi bi-info-circle"></i> Checkout Notes: {{ station.checkoutNotes }}</li>
         </ul>
         <div class="card-footer text-body-secondary">
             <div class="btn-toolbar d-flex flex-wrap gap-2" role="toolbar" aria-label="Toolbar with button groups">
                 <div class="btn-group" role="group" aria-label="First group">
                     <button class="btn btn-primary" @click="showCheckoutModal()"><i class="bi bi-box-arrow-up"></i>
                         Checkout</button>
-                    <button class="btn btn-danger" @click="checkinStation()"><i class="bi bi-box-arrow-in-down"></i>
+                    <button class="btn btn-danger" @click="showCheckinModal()"><i class="bi bi-box-arrow-in-down"></i>
                         Checkin/Return</button>
                 </div>
                 <div class="btn-group" role="group" aria-label="Second group">
@@ -61,11 +62,13 @@
             </div>
         </div>
         <StationCheckoutModal :station="station" :console-options="consoleOptions" ref="checkoutModal" />
+        <StationCheckinModal :station="station" :console-options="consoleOptions" ref="checkinModal"/>
     </div>
 </template>
 
 <script setup>
 import StationCheckoutModal from './modals/StationCheckoutModal.vue'
+import StationCheckinModal from './modals/StationCheckinModal.vue'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useQuery, useMutation, useQueryLoading } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
@@ -85,6 +88,7 @@ const props = defineProps({
 const isLoading = useQueryLoading()
 
 const checkoutModal = ref(null)
+const checkinModal = ref(null)
 
 const stationReq = useQuery(gql`
 query StationById($stationId: MongoID!) {
@@ -100,6 +104,7 @@ query StationById($stationId: MongoID!) {
         }
         name
         notes
+        checkoutNotes
         playerName
         status
     }
@@ -112,6 +117,7 @@ query ConsoleByIds($ids: [MongoID!]!, $sort: SortFindByIdsConsoleInput) {
     consoleByIds(_ids: $ids, sort: $sort) {
         _id
         checkoutWarning
+        checkinWarning
         games {
             count
             name
@@ -186,6 +192,7 @@ stationReq.subscribeToMore(() => ({
             currentGame
             name
             notes
+            checkoutNotes
             playerName
             status
         }
@@ -202,6 +209,7 @@ consoleReq.subscribeToMore(() => ({
         consoleUpdateByIds(recordIds: $recordIds) {
             _id
             checkoutWarning
+            checkinWarning
             games {
                 count
                 name
@@ -254,26 +262,18 @@ function showCheckoutModal() {
         stateToUpdateTo: stationStates.CHECKED_OUT
     })
 }
+
+function showCheckinModal() {
+    checkinModal.value.show()
+}
+
 function showSetFieldsModal() {
     checkoutModal.value.show({
         popFields: true,
         title: 'Set Fields'
     })
 }
-function checkinStation() {
-    isSubmitting.value = true
-    updateStation({
-        id: props.stationId,
-        record: {
-            playerName: '',
-            currentConsole: null,
-            currentExtras: [],
-            currentGame: '',
-            checkoutTime: null,
-            status: stationStates.DEFAULT
-        }
-    })
-}
+
 function toggleAvailability() {
     isSubmitting.value = true
     let newState = stationStates.DEFAULT

@@ -71,9 +71,16 @@
                         </fieldset>
                         <fieldset class="mb-3">
                             <legend>Other</legend>
-                            <label id="stationNotesLabel" class="form-label" for="stationNotesInput">Station Notes</label>
-                            <textarea rows="1" class="form-control" id="stationNotesInput" name="stationNotes" aria-describedby="stationNotesHelp" placeholder="Lorem ipsum..." v-model="formCurrentStationNotes"></textarea>
-                            <div id="stationNotesHelp" class="form-text">Some notes we need to know</div>
+                            <div class="mb-3">
+                                <label id="stationNotesLabel" class="form-label" for="stationNotesInput">Station Notes</label>
+                                <textarea rows="1" class="form-control" id="stationNotesInput" name="stationNotes" aria-describedby="stationNotesHelp" placeholder="Lorem ipsum..." v-model="formCurrentStationNotes"></textarea>
+                                <div id="stationNotesHelp" class="form-text">Some notes we need to know</div>
+                            </div>
+                            <div class="mb-3">
+                                <label id="checkoutNotesLabel" class="form-label" for="checkoutNotesInput">Checkout Notes</label>
+                                <textarea rows="1" class="form-control" id="checkoutNotesInput" name="checkoutNotes" aria-describedby="stationNotesHelp" placeholder="Lorem ipsum..." v-model="formCurrentCheckoutNotes"></textarea>
+                                <div id="checkoutNotesHelp" class="form-text">Some notes we need to know about this checkout. It will be wiped when the station is checked back in.</div>
+                            </div>
                         </fieldset>
                     </form>
                 </div>
@@ -116,6 +123,7 @@ const currentSelectedConsole = ref(null)
 
 const formCurrentGame = ref('')
 const formCurrentStationNotes = ref('')
+const formCurrentCheckoutNotes = ref('')
 
 const formCurrentExtras = ref([])
 
@@ -169,6 +177,7 @@ function populateFields() {
     updateCurrentConsoleObj()
     formCurrentGame.value = props.station?.currentGame ?? ''
     formCurrentStationNotes.value = props.station?.notes ?? ''
+    formCurrentCheckoutNotes.value = props.station?.checkoutNotes ?? ''
     setCustomTime(moment(props.station?.checkoutTime) ?? moment())
 }
 
@@ -233,7 +242,8 @@ function submitForm() {
         currentGame: formCurrentGame.value,
         // eslint-disable-next-line no-unused-vars
         currentExtras: formCurrentExtras.value.map(({__typename, name, ...gameObj}) => gameObj),
-        notes: formCurrentStationNotes.value
+        notes: formCurrentStationNotes.value,
+        checkoutNotes: formCurrentCheckoutNotes.value
     }
 
     if(updateTime.value) {

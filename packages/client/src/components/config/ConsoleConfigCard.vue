@@ -37,6 +37,10 @@
                     <label :for="'checkoutWarning' + consoleObj._id" class="form-label">Checkout Warning</label>
                     <input type="text" class="form-control" :id="'checkoutWarning' + consoleObj._id" v-model="formCheckoutWarning">
                 </div>
+                <div class="mb-4">
+                    <label :for="'checkinWarning' + consoleObj._id" class="form-label">Checkout Warning</label>
+                    <input type="text" class="form-control" :id="'checkinWarning' + consoleObj._id" v-model="formCheckinWarning">
+                </div>
             </div>
             <div class="card-footer">
                 <div class="btn-toolbar" role="toolbar" aria-label="Operation buttons for this console">
@@ -79,6 +83,7 @@ query ConsoleById($id: MongoID!) {
     consoleById(_id: $id) {
         _id
         checkoutWarning
+        checkinWarning
         games {
             count
             name
@@ -100,6 +105,7 @@ consoleReq.subscribeToMore({
         consoleUpdateById(recordId: $recordId) {
             _id
             checkoutWarning
+            checkinWarning
             games {
                 count
                 name
@@ -119,12 +125,15 @@ consoleReq.subscribeToMore({
 })
 
 consoleReq.onResult((result) => {
-    formName.value = result.data.consoleById.name
-    // eslint-disable-next-line no-unused-vars
-    formGames.value = result.data.consoleById.games.map(({__typename, ...gameObj}) => gameObj)
-    // eslint-disable-next-line no-unused-vars
-    formExtras.value = result.data.consoleById.extras.map(({__typename, ...gameObj}) => gameObj)
-    formCheckoutWarning.value = result.data.consoleById.checkoutWarning
+    if (result.data) {
+        formName.value = result.data.consoleById.name
+        // eslint-disable-next-line no-unused-vars
+        formGames.value = result.data.consoleById.games.map(({__typename, ...gameObj}) => gameObj)
+        // eslint-disable-next-line no-unused-vars
+        formExtras.value = result.data.consoleById.extras.map(({__typename, ...gameObj}) => gameObj)
+        formCheckoutWarning.value = result.data.consoleById.checkoutWarning
+        formCheckinWarning.value = result.data.consoleById.checkinWarning
+    }
 })
 
 const consoleObj = computed(() => consoleReq.result.value?.consoleById ?? {})
@@ -133,6 +142,7 @@ const formName = ref(consoleObj.value.name)
 const formGames = ref(consoleObj.value.games)
 const formExtras = ref(consoleObj.value.extras)
 const formCheckoutWarning = ref(consoleObj.value.checkoutWarning)
+const formCheckinWarning = ref(consoleObj.value.checkinWarning)
 
 const { mutate: updateConsole, onDone: onUpdateDone, onError: onUpdateError } = useMutation(gql`
 mutation ConsoleUpdateById($id: MongoID!, $record: UpdateByIdConsoleInput!) {
@@ -184,7 +194,8 @@ function saveClick() {
                 var textB = b.name.toUpperCase()
                 return (textA < textB) ? -1 : (textA > textB) ? 1 : 0
             }),
-            checkoutWarning: formCheckoutWarning.value
+            checkoutWarning: formCheckoutWarning.value,
+            checkinWarning: formCheckinWarning.value
         }
     })
 }

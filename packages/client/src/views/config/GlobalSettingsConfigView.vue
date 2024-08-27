@@ -1,84 +1,133 @@
 <template>
     <main class="container pt-2 d-flex flex-column gap-3">
-        <ConfigSettingConfig v-for="settingObj in globalSettings" :key="settingObj._id" :setting-id="settingObj._id"/>
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="New Setting Name" aria-label="New Setting Name" aria-describedby="button-add" v-model="newSettingName">
-            <button class="btn btn-primary" type="button" id="button-add" @click="createNewSetting"><i class="bi bi-plus"></i> Add</button>
+        <!-- <p v-for="setting in settingNames" :key="setting">{{ setting }}</p>
+        <ConfigSettingConfig v-for="settingObj in globalSettings" :key="settingObj._id" :name="settingObj._id"/> -->
+        <div class="card">
+            <div class="card-header">
+                General Settings
+            </div>
+            <div class="card-body">
+                <ConfigSettingConfig :name="settings.appName.name" :setting-obj="settings.appName.settingObj" :display-name="settings.appName.displayName"/>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                Time Settings
+            </div>
+            <div class="card-body">
+                <ConfigSettingConfig :name="settings.warnTime.name" :setting-obj="settings.warnTime.settingObj" :display-name="settings.warnTime.displayName"/>
+                <ConfigSettingConfig :name="settings.kickTime.name" :setting-obj="settings.kickTime.settingObj" :display-name="settings.kickTime.displayName"/>
+                <ConfigSettingConfig :name="settings.warnWaitlistTime.name" :setting-obj="settings.warnWaitlistTime.settingObj" :display-name="settings.warnWaitlistTime.displayName"/>
+                <ConfigSettingConfig :name="settings.dangerWaitlistTime.name" :setting-obj="settings.dangerWaitlistTime.settingObj" :display-name="settings.dangerWaitlistTime.displayName"/>
+            </div>
         </div>
     </main>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import ConfigSettingConfig from '../../components/config/GlobalSettingConfigCard.vue'
-import UseUpdateQuery from '../../useables/UseUpdateQuery'
 
 import {useToast} from 'vue-toast-notification'
+import UseUpdateQuery from '../../useables/UseUpdateQuery'
 const toast = useToast()
 
-const globalSettingReq = useQuery(gql`
-query GlobalSetting($sort: SortFindManyGlobalSettingInput) {
-    globalSetting(sort: $sort) {
-        _id
-        name
-        value
+const settings = {
+    appName: {
+        name: 'appName',
+        settingObj: ref(null),
+        displayName: 'App Name'
+    },
+    kickTime: {
+        name: 'kickTime',
+        settingObj: ref(null),
+        displayName: 'Kick Time'
+    },
+    warnTime: {
+        name: 'warnTime',
+        settingObj: ref(null),
+        displayName: 'Warn Time'
+    },
+    warnWaitlistTime: {
+        name: 'warnWaitlistTime',
+        settingObj: ref(null),
+        displayName: 'Warn Waitlist Time'
+    },
+    dangerWaitlistTime: {
+        name: 'dangerWaitlistTime',
+        settingObj: ref(null),
+        displayName: 'Danger Waitlist Time'
     }
-}`, {
-    sort: 'NAME_ASC'
-})
+}
 
-globalSettingReq.subscribeToMore(() => ({
-    document: gql`
-    subscription GlobalSettingCreate {
-        globalSettingCreate {
-            _id
-            name
-            value
-        }
-    }`,
-    updateQuery: UseUpdateQuery.standardCollectionCreateUpdateQuery('globalSetting', 'globalSettingCreate')
-}))
-
-globalSettingReq.subscribeToMore({
-    document: gql`
-    subscription GlobalSettingRemove {
-        globalSettingRemove {
-            _id
-        }
-    }`,
-    updateQuery: UseUpdateQuery.standardCollectionRemoveUpdateQuery('globalSetting', 'globalSettingRemove')
-})
-
-const globalSettings = computed(() => globalSettingReq.result.value?.globalSetting ?? [])
-
-const newSettingName = ref('')
-
-const { mutate: createGlobalSetting, onDone: onGlobalSettingsDone, onError: onGlobalSettingsError } = useMutation(gql`
-mutation GlobalSettingCreate($record: CreateOneGlobalSettingInput!) {
-    globalSettingCreate(record: $record) {
-        record {
-            _id
-            name
-            value
-        }
-    }
+const allGlobalSettingLookup = useQuery(gql`
+query GlobalSetting {
+  globalSetting {
+    _id
+    name
+    value
+  }
 }`)
 
-onGlobalSettingsDone(() => {
-    newSettingName.value = ''
+allGlobalSettingLookup.onResult((result) => {
+    if (result.data) {
+        Object.keys(settings).forEach((key) => {
+            let isFound = false
+            for(const gs of result.data.globalSetting) {
+                if (settings[key].name === gs.name) {
+                    settings[key].settingObj.value = gs
+                    isFound = true
+                    break
+                }
+            }
+            if (!isFound) {
+                createGlobalSetting(settings[key].name)
+            }
+        })
+    }
 })
 
-onGlobalSettingsError((error) => {
-    toast.error('Error creating a new global setting')
+allGlobalSettingLookup.subscribeToMore({
+    document: gql`
+    subscription GlobalSettingUpdate {
+        globalSettingUpdate {
+            _id
+            name
+            value
+        }
+    }`,
+    updateQuery: UseUpdateQuery.standardCollectionUpdateUpdateQuery('globalSetting', 'globalSettingUpdate')
+})
+
+const { mutate: createGlobalSettingMutation, onDone: createGlobalSettingMutationDone, onError: createGlobalSettingMutationError } = useMutation(gql`
+    mutation GlobalSettingCreate($record: CreateOneGlobalSettingInput!) {
+        globalSettingCreate(record: $record) {
+            record {
+                _id
+                name
+                value
+            }
+        }
+    }`)
+
+createGlobalSettingMutationDone(result => {
+    if (result.data) {
+        const settingName = result.data.globalSettingCreate.record.name
+        settings[settingName].settingObj.value = result.data.globalSettingCreate.record
+    }
+})
+
+createGlobalSettingMutationError((error) => {
+    toast.error('Error creating a new console')
     console.error(error)
 })
 
-function createNewSetting() {
-    createGlobalSetting({
+function createGlobalSetting(name) {
+    createGlobalSettingMutation({
         record: {
-            name: newSettingName.value
+            name
         }
     })
 }
