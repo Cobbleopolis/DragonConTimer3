@@ -4,7 +4,7 @@
   "version": "3.1.0",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build --mode production",
+    "build": "vite build -d --mode production",
     "preview": "vite preview",
     "test:unit": "vitest --environment jsdom --root src/",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
