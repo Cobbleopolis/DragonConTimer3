@@ -30,11 +30,11 @@ jobs:
       - 
         name: Install dependencies
         run: |
-          yarn install
+          npm install
       - 
         name: Run build 
         run: |
-          yarn run build --verbose
+          npm run build --verbose
       -
         name: Docker meta
         id: meta
