@@ -7,6 +7,8 @@ const __dirname = import.meta.dirname
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
+
+
 function fixSourceMaps () {
     let currentInterval = null
     return {
@@ -41,21 +43,24 @@ function fixSourceMaps () {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig({
-    plugins: [vue({
-        include: '**/*.vue',
-    }), fixSourceMaps()],
-    resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url)),
+export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
+    const isProd = mode === 'production'
+    const watchSettings = isProd ? null : { usePolling: true }
+    const extraPlugins = isProd ? [] : [fixSourceMaps()]
+    return {
+        plugins: [vue({
+            include: '**/*.vue',
+        }), ...extraPlugins],
+        resolve: {
+            alias: {
+                '@': fileURLToPath(new URL('./src', import.meta.url)),
+            },
         },
-    },
-    server: {
-        watch: {
-            usePolling: true,
+        server: {
+            watch: watchSettings
+        },
+        build: {
+            watch: watchSettings
         }
-    },
-    build: {
-        
     }
 })
