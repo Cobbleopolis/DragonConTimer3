@@ -13,6 +13,16 @@
             "runtimeArgs": [
                 "run-script", "dev"
             ]
+        },
+        {
+            "name": "Build via NPM",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script", "build"
+            ]
         }
     ]
 }
