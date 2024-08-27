@@ -31,7 +31,7 @@ jobs:
       - 
         name: Run build 
         run: |
-          npm run build
+          npm run build --verbose
       -
         name: Docker meta
         id: meta
